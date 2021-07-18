@@ -7,7 +7,7 @@
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/hwmland/homeassistant-xmrig/Validate%20with%20HACS?label=Validate%20with%20HACS)
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/hwmland/homeassistant-xmrig/Validate%20with%20hassfest?label=Validate%20with%20hassfest)
 
-[![buymeacoffee_badge](https://img.shields.io/badge/Donate-Buy%20Me%20a%20Coffee-ff813f?style=plastic)](https://www.buymeacoffee.com/hwmland)
+[![buymeacoffee_badge](https://img.shields.io/badge/Donate-Buy%20Me%20a%20Coffee-yellow?style=plastic&logo=buymeacoffee)](https://www.buymeacoffee.com/hwmland)
 
 Monitor and control (future plan) xmrig instances from Home Assistant.
 
