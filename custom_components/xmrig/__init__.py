@@ -1,4 +1,4 @@
-"""XMR Pool Statistics custom component."""
+"""XMRIG custom component."""
 # from config.custom_components.xmrpool_stat.sensor import XmrPoolStatisticsSensor
 from copy import copy
 import logging
@@ -10,17 +10,19 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv, device_registry as dr
 
 from .const import (
-    CONF_WALLET,
+    CONF_ADDRESS,
+    CONF_TOKEN,
     DATA_CONTROLLER,
     DOMAIN,
 )
-from .xmrpoolstat_controller import XmrPoolStatController
+
+from .summary_controller import SummaryController
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
-    """XMR Pool Statistics custom component."""
+    """XMRIG custom component."""
     _LOGGER.debug(f"async_setup({config})")
     hass.data[DOMAIN] = {}
     hass.data[DOMAIN][DATA_CONTROLLER] = {}
@@ -31,7 +33,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 async def async_setup_entry(
     hass: HomeAssistant, config_entry: config_entries.ConfigEntry
 ) -> bool:
-    """Set up a wallet for a config entry."""
+    """Set up a xmrig."""
     _LOGGER.debug(
         "async_setup_entry({0}), state: {1}".format(
             config_entry.data[CONF_NAME], config_entry.state
@@ -39,7 +41,7 @@ async def async_setup_entry(
     )
 
     # create, initialize and preserve controler
-    controller = XmrPoolStatController(hass, config_entry)
+    controller = SummaryController(hass, config_entry)
     # await controller.async_update()
     # if not controller.data:
     #   raise ConfigEntryNotReady()
@@ -62,7 +64,7 @@ async def async_unload_entry(
             config_entry.data[CONF_NAME], config_entry.state
         )
     )
-    controller: XmrPoolStatController = hass.data[DOMAIN][DATA_CONTROLLER][
+    controller: SummaryController = hass.data[DOMAIN][DATA_CONTROLLER][
         config_entry.entry_id
     ]
     await hass.config_entries.async_forward_entry_unload(config_entry, "sensor")

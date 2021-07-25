@@ -1,8 +1,8 @@
-"""XMR Pool Statistics sensor platform."""
+"""XMRIG sensor platform."""
 
 from collections.abc import Awaitable, Iterable, Mapping
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from voluptuous.validators import Switch
 
@@ -13,73 +13,73 @@ from homeassistant.components.sensor import SensorEntity
 from homeassistant.const import CONF_NAME, STATE_UNKNOWN
 
 # from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.typing import StateType
 
-from .const import (
-    DATA_CONTROLLER,
-    DOMAIN,
-)
+from .const import DATA_CONTROLLER, DOMAIN
 from .helpers import DefaultTo
-from .xmrpoolstat_controller import XmrPoolStatController
+
+from .summary_controller import SummaryController
+
 
 _LOGGER = logging.getLogger(__name__)
 
-SETUP_FACTORY = "facktory"
+SETUP_FACTORY = "factory"
 SETUP_ICON = "icon"
 SETUP_NAME = "name"
 SETUP_UNIT = "unit"
 SETUP_KEY = "key"
-SETUP_FACTOR = "factor"
+SETUP_DATA = "data"
 
 _SENSORS: Dict[str, Dict[str, Any]] = {
-    "balance": {
-        SETUP_NAME: "Balance",
-        SETUP_FACTORY: lambda: XmrPoolStatisticsSensorScaled,
-        SETUP_KEY: "balance",
-        SETUP_FACTOR: 1e12,
-        SETUP_UNIT: "XMR",
-        SETUP_ICON: "mdi:bitcoin",
-    },
-    "hashrate": {
-        SETUP_NAME: "Hashrate",
-        SETUP_FACTORY: lambda: XmrPoolStatisticsSensorHashrate,
-        SETUP_ICON: "mdi:gauge",
-    },
-    "hashrate-raw": {
-        SETUP_NAME: "Hashrate Raw",
-        SETUP_FACTORY: lambda: XmrPoolStatisticsSensorHashrateRaw,
+    "hashrate10s": {
+        SETUP_NAME: "Hashrate 10s",
+        SETUP_FACTORY: lambda: XmrigSensorHashrate,
+        SETUP_DATA: 0,
         SETUP_UNIT: "H/s",
         SETUP_ICON: "mdi:gauge",
     },
-    "hashes": {
-        SETUP_NAME: "Hashes",
-        SETUP_FACTORY: lambda: XmrPoolStatisticsSensorValue,
-        SETUP_KEY: "hashes",
-        SETUP_UNIT: "H",
+    "hashrate1m": {
+        SETUP_NAME: "Hashrate 1m",
+        SETUP_FACTORY: lambda: XmrigSensorHashrate,
+        SETUP_DATA: 1,
+        SETUP_UNIT: "H/s",
+        SETUP_ICON: "mdi:gauge",
+    },
+    "hashrate15m": {
+        SETUP_NAME: "Hashrate 15m",
+        SETUP_FACTORY: lambda: XmrigSensorHashrate,
+        SETUP_DATA: 2,
+        SETUP_UNIT: "H/s",
+        SETUP_ICON: "mdi:gauge",
+    },
+    "difficulty": {
+        SETUP_NAME: "Difficulty",
+        SETUP_FACTORY: lambda: XmrigSensorSimple,
+        SETUP_DATA: ["results", "diff_current"],
+        SETUP_UNIT: "dif",
+        SETUP_ICON: "mdi:gauge",
+    },
+    "shares_good": {
+        SETUP_NAME: "Shares good",
+        SETUP_FACTORY: lambda: XmrigSensorSimple,
+        SETUP_DATA: ["results", "shares_good"],
+        SETUP_UNIT: "cnt",
         SETUP_ICON: "mdi:counter",
     },
-    "expired": {
-        SETUP_NAME: "Expired",
-        SETUP_FACTORY: lambda: XmrPoolStatisticsSensorValue,
-        SETUP_KEY: "expired",
-        SETUP_UNIT: "H",
+    "shares_total": {
+        SETUP_NAME: "Shares total",
+        SETUP_FACTORY: lambda: XmrigSensorSimple,
+        SETUP_DATA: ["results", "shares_total"],
+        SETUP_UNIT: "cnt",
         SETUP_ICON: "mdi:counter",
     },
-    "invalid": {
-        SETUP_NAME: "Invalid",
-        SETUP_FACTORY: lambda: XmrPoolStatisticsSensorValue,
-        SETUP_KEY: "invalid",
-        SETUP_UNIT: "H",
-        SETUP_ICON: "mdi:counter",
-    },
-    "last-reward": {
-        SETUP_NAME: "Last reward",
-        SETUP_FACTORY: lambda: XmrPoolStatisticsSensorScaled,
-        SETUP_KEY: "last_reward",
-        SETUP_FACTOR: 1e12,
-        SETUP_UNIT: "XMR",
-        SETUP_ICON: "mdi:bitcoin",
+    "connection": {
+        SETUP_NAME: "Pool",
+        SETUP_FACTORY: lambda: XmrigSensorSimple,
+        SETUP_DATA: ["connection", "pool"],
+        SETUP_ICON: "mdi:cable",
     },
 }
 
@@ -87,7 +87,7 @@ _SENSORS: Dict[str, Dict[str, Any]] = {
 async def async_setup_entry(
     hass: HomeAssistant, configEntry: config_entries.ConfigEntry, async_add_entities
 ):
-    """Set up XMR pool statistics sensor."""
+    """Set up XMRIG sensor."""
     _LOGGER.debug(
         "async_setup_entry({0}), state: {1}".format(
             configEntry.data[CONF_NAME], configEntry.state
@@ -95,7 +95,7 @@ async def async_setup_entry(
     )
 
     instanceName: str = configEntry.data[CONF_NAME]
-    controller: XmrPoolStatController = hass.data[DOMAIN][DATA_CONTROLLER][
+    controller: SummaryController = hass.data[DOMAIN][DATA_CONTROLLER][
         configEntry.entry_id
     ]
     sensors = {}
@@ -115,7 +115,7 @@ async def async_setup_entry(
 @callback
 def UpdateItems(
     instanceName: str,
-    controller: XmrPoolStatController,
+    controller: SummaryController,
     async_add_entities,
     sensors: Dict[str, Any],
 ) -> None:
@@ -141,14 +141,14 @@ def UpdateItems(
 
 
 ################################################
-class XmrPoolStatisticsSensor(SensorEntity):
-    """Define XMR Pool sensor"""
+class XmrigSensor(SensorEntity):
+    """Define XMRIG sensor"""
 
     def __init__(
         self,
         instanceName: str,
         sensorName: str,
-        controller: XmrPoolStatController,
+        controller: SummaryController,
         sensorDefinition: Dict[str, Any],
     ) -> None:
         """Initialize"""
@@ -195,7 +195,6 @@ class XmrPoolStatisticsSensor(SensorEntity):
     async def async_update(self):
         """Synchronize state with controller."""
         _LOGGER.debug("async_update")
-        # self._val = randint(800, 1200)
 
     async def async_added_to_hass(self):
         """Run when entity about to be added to hass."""
@@ -211,87 +210,49 @@ class XmrPoolStatisticsSensor(SensorEntity):
         """Private instance intialization"""
         pass
 
+    @property
+    def device_info(self) -> Dict[str, Any]:
+        """Return a description for device registry."""
+        info = {
+            "name": self._instanceName + " xmrig",
+            "identifiers": {
+                (
+                    DOMAIN,
+                    self._instanceName,
+                )
+            },
+            "sw_version": self._controller.GetData(["version"]),
+            "manufacturer": self._controller.GetData(["cpu", "brand"]),
+            "model": "{}-{}".format(
+                self._controller.GetData(["cpu", "arch"]),
+                self._controller.GetData(["cpu", "assembly"]),
+            ),
+            # "entry_type": "service",
+        }
+
+        return info
+
 
 ################################################
-class XmrPoolStatisticsSensorHashrate(XmrPoolStatisticsSensor):
+class XmrigSensorHashrate(XmrigSensor):
     @property
     def _stateInternal(self) -> StateType:
         """Return the internal state."""
-        if self._value == None:
-            return STATE_UNKNOWN
-        return self._value[0]
-
-    @property
-    def unit_of_measurement(self) -> str:
-        """Return the unit of measurement of this entity, if any."""
-        if self._unit != None:
-            return self._unit
-        if self._value == None:
-            return None
-        return self._value[1]
-
-    async def async_update(self):
-        """Synchronize state with controller."""
-        _LOGGER.debug("XmrPoolStatisticsSensorHashrate.async_update")
-        self._value = self._controller.GetValue(None, "hashrate").split()
+        hashrates: List[float] = self._controller.GetData(["hashrate", "total"])
+        return hashrates[self._index]
 
     def _privateInit(self) -> None:
         """Private instance intialization"""
-        self._value = None
+        self._index: int = self._sensorDefinition[SETUP_DATA]
 
 
 ################################################
-class XmrPoolStatisticsSensorHashrateRaw(XmrPoolStatisticsSensorHashrate):
+class XmrigSensorSimple(XmrigSensor):
     @property
     def _stateInternal(self) -> StateType:
         """Return the internal state."""
-        if self._value == None:
-            return STATE_UNKNOWN
-        multiplier = 0.0
-        unit = self._value[1]
-        if unit == "H":
-            multiplier = 1000.0
-        elif unit == "KH":
-            multiplier = 1000.0
-        elif unit == "MH":
-            multiplier = 1000000.0
-        return int(float(self._value[0]) * multiplier)
-
-
-################################################
-class XmrPoolStatisticsSensorValue(XmrPoolStatisticsSensor):
-    @property
-    def _stateInternal(self) -> StateType:
-        return self._controller.GetValue(None, self._key)
+        return self._controller.GetData(self._path)
 
     def _privateInit(self) -> None:
         """Private instance intialization"""
-        self._key: str = self._sensorDefinition[SETUP_KEY]
-
-
-################################################
-class XmrPoolStatisticsSensorScaled(XmrPoolStatisticsSensorValue):
-    @property
-    def _stateInternal(self) -> StateType:
-        return float(self._controller.GetValue(None, self._key)) / self._factor
-
-    def _privateInit(self) -> None:
-        """Private instance intialization"""
-        super()._privateInit()
-        self._factor: float = self._sensorDefinition[SETUP_FACTOR]
-
-
-#   @property
-#   def device_info(self) -> Dict[str, Any]:
-#       """Return a description for device registry."""
-#       info = {
-#           "name": "test",
-#           "identifiers": {
-#               (
-#                   DOMAIN,
-#                   self._instanceName,
-#               )
-#           },
-#       }
-#
-#       return info
+        self._path: List[str] = self._sensorDefinition[SETUP_DATA]

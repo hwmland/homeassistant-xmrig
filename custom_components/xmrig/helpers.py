@@ -1,9 +1,10 @@
 """Helper methods"""
+from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
 
-def DefaultTo(value: str, default: str) -> str:
+def DefaultTo(value: str | None, default: str) -> str:
     return value if value != None else default
 
 

@@ -1,4 +1,4 @@
-"""Config flow to configure XMR Pool wallet component."""
+"""Config flow to configure XMRIG component."""
 
 import json
 import logging
@@ -11,7 +11,12 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.components.rest.data import RestData
 from homeassistant.core import callback
 
-from .const import CONF_WALLET, DOMAIN
+from .const import (
+    CONF_ADDRESS,
+    CONF_TOKEN,
+    DATA_CONTROLLER,
+    DOMAIN,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -34,13 +39,14 @@ class ConfigFlowException(Exception):
 AUTH_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_NAME): cv.string,
-        vol.Required(CONF_WALLET): cv.string,
+        vol.Required(CONF_ADDRESS): cv.string,
+        vol.Optional(CONF_TOKEN): cv.string,
     }
 )
 
 
-class XmrPoolFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle a wallet config flow."""
+class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
+    """Handle a config flow."""
 
     data: Optional[Dict[str, Any]]
 
@@ -53,21 +59,22 @@ class XmrPoolFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 _LOGGER.debug("user_input not None")
                 if user_input[CONF_NAME] in configured_instances(self.hass, CONF_NAME):
                     raise ConfigFlowException("name_exists")
-                if user_input[CONF_WALLET] in configured_instances(
-                    self.hass, CONF_WALLET
+                if user_input[CONF_ADDRESS] in configured_instances(
+                    self.hass, CONF_ADDRESS
                 ):
-                    raise ConfigFlowException("wallet_exists")
+                    raise ConfigFlowException("address_exists")
 
-                resource = (
-                    "https://web.xmrpool.eu:8119/stats_address?address="
-                    + user_input[CONF_WALLET]
+                resource = user_input[CONF_ADDRESS] + "/2/summary"
+                token = user_input[CONF_TOKEN]
+                headers = (
+                    None if token is None else {"Authorization": "Bearer " + token}
                 )
                 rest = RestData(
                     self.hass,
                     "GET",
                     resource,
                     auth=None,
-                    headers=None,
+                    headers=headers,
                     params=None,
                     data=None,
                     verify_ssl=True,
@@ -75,10 +82,6 @@ class XmrPoolFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 await rest.async_update()
                 if rest.data is None:
                     raise ConfigFlowException("no_answer")
-                data = json.loads(rest.data)
-                if "error" in data.keys():
-                    _LOGGER.debug("Invalid answer: %s", data["error"])
-                    raise ConfigFlowException("invalid_answer")
             except ConfigFlowException as ex:
                 _LOGGER.warning("Configuration error: %s", ex.error)
                 errors["base"] = ex.error

@@ -1,4 +1,5 @@
-DOMAIN = "xmrpool_stat"
+DOMAIN = "xmrig"
 DATA_CONTROLLER = "controller"
 
-CONF_WALLET = "wallet"
+CONF_ADDRESS = "address"
+CONF_TOKEN = "token"
