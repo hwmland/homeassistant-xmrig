@@ -8,7 +8,7 @@
           "step": {
             "user": {
                 "data": {
-                    "name": "Name of the wallet",
+                    "name": "Name of the rig",
                     "address": "Instance address",
 					"token": "Access token"
                 },
