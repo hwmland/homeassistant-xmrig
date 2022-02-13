@@ -8,7 +8,6 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_NAME
 import homeassistant.helpers.config_validation as cv
-from homeassistant.components.rest.data import RestData
 from homeassistant.core import callback
 
 from .const import (
@@ -17,6 +16,7 @@ from .const import (
     DATA_CONTROLLER,
     DOMAIN,
 )
+from .restapicall import RestApiCall
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -65,11 +65,11 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     raise ConfigFlowException("address_exists")
 
                 resource = user_input[CONF_ADDRESS] + "/2/summary"
-                token = user_input[CONF_TOKEN]
+                token = user_input[CONF_TOKEN] if CONF_TOKEN in user_input else None
                 headers = (
                     None if token is None else {"Authorization": "Bearer " + token}
                 )
-                rest = RestData(
+                rest = RestApiCall(
                     self.hass,
                     "GET",
                     resource,
@@ -80,15 +80,25 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     verify_ssl=True,
                 )
                 await rest.async_update()
+                if rest.status == 403:
+                    raise ConfigFlowException("not_authorized")
                 if rest.data is None:
                     raise ConfigFlowException("no_answer")
+                response = json.loads(rest.data)
+                if "error" in response:
+                    responseError = response["error"]
+                    if responseError == "Unauthorized":
+                        raise ConfigFlowException("not_authorized")
+                    else:
+                        _LOGGER.warning(
+                            "Error received from server: %s", response.error
+                        )
             except ConfigFlowException as ex:
                 _LOGGER.warning("Configuration error: %s", ex.error)
                 errors["base"] = ex.error
-            except:
-                _LOGGER.warning("Unexpected exception")
+            except Exception as ex:
+                _LOGGER.warning("Unexpected exception %s", ex)
                 errors["base"] = "unknown_exception"
-                raise
             if not errors:
                 # Input is valid, set data.
                 self.data = user_input
@@ -96,7 +106,7 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     title=user_input[CONF_NAME], data=self.data
                 )
 
-        _LOGGER.debug("Show input form...")
+        _LOGGER.debug("Show input form")
         return self.async_show_form(
             step_id="user", data_schema=AUTH_SCHEMA, errors=errors
         )

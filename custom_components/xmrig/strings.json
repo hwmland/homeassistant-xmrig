@@ -1,20 +1,23 @@
 {
-    "config": {
-        "error": {
-            "name_exists": "Name already exists",
-            "instance_exists": "Instance already exists",
-            "invalid_answer": "Invalid answer from server"
-          },
-          "step": {
-            "user": {
-                "data": {
-                    "name": "Name of the rig",
-                    "address": "Instance address",
-					"token": "Access token"
-                },
-                "description": "XMRIG instance.",
-                "title": "XMRIG"
-            }
-        }
+  "config": {
+    "error": {
+      "name_exists": "Name already exists",
+      "address_exists": "You are already connected to this address",
+      "instance_exists": "Instance already exists",
+      "invalid_answer": "Invalid answer from server",
+      "no_answer": "No answer from the server. Check that server is running and you have correct address.",
+      "not_authorized": "You have no rights to access this server."
+    },
+    "step": {
+      "user": {
+        "data": {
+          "name": "Name of the rig",
+          "address": "Instance address",
+          "token": "Access token"
+        },
+        "description": "XMRIG instance.",
+        "title": "XMRIG"
+      }
     }
+  }
 }
