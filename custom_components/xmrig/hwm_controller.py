@@ -9,12 +9,13 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, Optional, List
 
 from homeassistant import config_entries
-from homeassistant.components.rest.data import RestData
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_track_time_interval
+
+from .restapicall import RestApiCall
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -42,7 +43,7 @@ class HwmController:
         # pylint: disable=assignment-from-none
         resource = self._vGetResource(config_entry)
         headers = self._vGetHeaders(config_entry)
-        self._rest = RestData(
+        self._rest = RestApiCall(
             self._hass,
             "GET",
             resource,
@@ -55,11 +56,11 @@ class HwmController:
         self._data: Dict[str, Any] = None
 
     def _vGetResource(self, config_entry: config_entries.ConfigEntry) -> str:
-        """Get RestData resource"""
+        """Get RestApiCall resource"""
         return None
 
     def _vGetHeaders(self, config_entry: config_entries.ConfigEntry) -> any:  # @type
-        """Get RestData headers"""
+        """Get RestApiCall headers"""
         return None
 
     async def async_initialize(self) -> None:
