@@ -8,7 +8,6 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, Optional, List
 
 from homeassistant import config_entries
-from homeassistant.components.rest.data import RestData
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
 from homeassistant.core import HomeAssistant
@@ -35,11 +34,11 @@ class SummaryController(HwmController):
         super().__init__(DOMAIN, "summary", hass, config_entry)
 
     def _vGetResource(self, config_entry: config_entries.ConfigEntry) -> str:
-        """Get RestData resource"""
+        """Get RestApiCall resource"""
         return self._address + "/2/summary"
 
     def _vGetHeaders(self, config_entry: config_entries.ConfigEntry) -> any:  # @type
-        """Get RestData headers"""
+        """Get RestApiCall headers"""
         if self._token is None:
             return None
         return {"Authorization": "Bearer " + self._token}
