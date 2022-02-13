@@ -23,3 +23,5 @@ Alternatively you can install it manually by copying the contents of `custom_com
 # Setup integration
 
 Add new XMRIG instance configuring name, address and (opion) access token.
+It's not possible to add one server twice.
+
