@@ -1,7 +1,7 @@
 # XMRIG integration for Home Assistant
 
 ![GitHub](https://img.shields.io/github/license/hwmland/homeassistant-xmrig?style=plastic)
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg?style=plastic)](https://github.com/custom-components/hacs)
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-ltgreen.svg?style=plastic)](https://github.com/custom-components/hacs)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/hwmland/homeassistant-xmrig?style=plastic)
 ![GitHub commits since latest release](https://img.shields.io/github/commits-since/hwmland/homeassistant-xmrig/latest?style=plastic)
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/hwmland/homeassistant-xmrig/Validate%20with%20HACS?label=Validate%20with%20HACS)
