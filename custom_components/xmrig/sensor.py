@@ -81,6 +81,12 @@ _SENSORS: Dict[str, Dict[str, Any]] = {
         SETUP_DATA: ["connection", "pool"],
         SETUP_ICON: "mdi:cable",
     },
+    "algo": {
+        SETUP_NAME: "Algo",
+        SETUP_FACTORY: lambda: XmrigSensorSimple,
+        SETUP_DATA: ["algo"],
+        SETUP_ICON: "mdi:application-braces-outline",
+    },
 }
 
 
