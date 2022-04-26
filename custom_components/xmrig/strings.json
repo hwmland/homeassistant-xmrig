@@ -15,8 +15,7 @@
           "address": "Instance address",
           "token": "Access token"
         },
-        "description": "XMRIG instance.",
-        "title": "XMRIG"
+        "description": "XMRIG instance."
       }
     }
   }
