@@ -39,19 +39,14 @@ async def async_setup_entry(
             config_entry.data[CONF_NAME], config_entry.state
         )
     )
-
     # create, initialize and preserve controler
     controller = SummaryController(hass, config_entry)
-    # await controller.async_update()
-    # if not controller.data:
-    #   raise ConfigEntryNotReady()
     await controller.async_initialize()
     hass.data[DOMAIN][DATA_CONTROLLER][config_entry.entry_id] = controller
-
-    hass.async_create_task(
-        hass.config_entries.async_forward_entry_setup(config_entry, "sensor")
-    )
-
+    
+    # Replace the deprecated call with the new method
+    await hass.config_entries.async_forward_entry_setups(config_entry, ["sensor"])
+    
     return True
 
 
